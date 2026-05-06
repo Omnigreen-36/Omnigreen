@@ -1,0 +1,156 @@
+#include <Ultrasonic.h> // librairie Grove Ultrasonic Ranger
+
+// =====================
+// PINS ULTRASONS (Grove Ranger)
+#define PIN_US_G 2
+#define PIN_US_D 4
+
+Ultrasonic usG(PIN_US_G);
+Ultrasonic usD(PIN_US_D);
+
+// =====================
+// PINS MOTEURS ROUES
+#define IN1 22
+#define IN2 23
+#define IN3 24
+#define IN4 25
+#define ENA 6
+#define ENB 9
+
+// =====================
+// PINS LAMES
+#define IN5 26
+#define IN6 27
+#define IN7 28
+#define IN8 29
+#define ENA_LAMES 10
+#define ENB_LAMES 11
+
+int vitesse = 180;
+int vitesseLames = 200;
+#define DISTANCE_SECURITE 20
+bool obstacle = false;
+
+void setup() {
+  Serial.begin(9600);
+  Serial1.begin(9600); // Bluetooth
+
+  pinMode(IN1, OUTPUT);
+  pinMode(IN2, OUTPUT);
+  pinMode(IN3, OUTPUT);
+  pinMode(IN4, OUTPUT);
+  pinMode(ENA, OUTPUT);
+  pinMode(ENB, OUTPUT);
+
+  pinMode(IN5, OUTPUT);
+  pinMode(IN6, OUTPUT);
+  pinMode(IN7, OUTPUT);
+  pinMode(IN8, OUTPUT);
+  pinMode(ENA_LAMES, OUTPUT);
+  pinMode(ENB_LAMES, OUTPUT);
+
+  stopMoteurs();
+}
+
+void loop() {
+  long dG = usG.MeasureInCentimeters();
+  long dD = usD.MeasureInCentimeters();
+
+  Serial.print("G: ");
+  Serial.print(dG);
+  Serial.print(" cm | D: ");
+  Serial.println(dD);
+
+  //sécurité obstacle
+  if ((dG > 0 && dG < DISTANCE_SECURITE) || (dD > 0 && dD < DISTANCE_SECURITE)) {
+    if (!obstacle) {
+      stopMoteurs();
+      obstacle = true;
+      Serial.println("Obstacle détecté !");
+    }
+  } else {
+    obstacle = false;
+  }
+
+  if (Serial1.available()) {
+    char c = Serial1.read();
+    Serial.println(c);
+
+    if (c == 'Z' && obstacle) {
+      Serial.println("Avancer ignoré (obstacle) !");
+      return;
+    }
+
+    switch (c) {
+      case 'Z': avancer(); break;
+      case 'S': reculer(); break;
+      case 'Q': gauche(); break;
+      case 'D': droite(); break;
+      case 'A': rotationGauche(); break;
+      case 'E': rotationDroite(); break;
+      case 'R': stopMoteurs(); break;
+      case 'W': lamesON(); break;
+      case 'X': lamesOFF(); break;
+    }
+  }
+}
+
+// ============ Mouvements & fonctions moteurs
+void avancer() {
+  moteurGauche(HIGH, LOW);
+  moteurDroit(HIGH, LOW);
+}
+void reculer() {
+  moteurGauche(LOW, HIGH);
+  moteurDroit(LOW, HIGH);
+}
+void gauche() {
+  moteurGauche(LOW, LOW);
+  moteurDroit(HIGH, LOW);
+}
+void droite() {
+  moteurGauche(HIGH, LOW);
+  moteurDroit(LOW, LOW);
+}
+void rotationGauche() {
+  moteurGauche(LOW, HIGH);
+  moteurDroit(HIGH, LOW);
+}
+void rotationDroite() {
+  moteurGauche(HIGH, LOW);
+  moteurDroit(LOW, HIGH);
+}
+void stopMoteurs() {
+  analogWrite(ENA, 0);
+  analogWrite(ENB, 0);
+  digitalWrite(IN1, LOW);
+  digitalWrite(IN2, LOW);
+  digitalWrite(IN3, LOW);
+  digitalWrite(IN4, LOW);
+}
+void moteurGauche(int s1, int s2) {
+  digitalWrite(IN1, s1);
+  digitalWrite(IN2, s2);
+  analogWrite(ENA, vitesse);
+}
+void moteurDroit(int s1, int s2) {
+  digitalWrite(IN3, s1);
+  digitalWrite(IN4, s2);
+  analogWrite(ENB, vitesse);
+}
+void lamesON() {
+  digitalWrite(IN5, HIGH);
+  digitalWrite(IN6, LOW);
+  analogWrite(ENA_LAMES, vitesseLames);
+  digitalWrite(IN7, HIGH);
+  digitalWrite(IN8, LOW);
+  analogWrite(ENB_LAMES, vitesseLames);
+}
+void lamesOFF() {
+  analogWrite(ENA_LAMES, 0);
+  analogWrite(ENB_LAMES, 0);
+  digitalWrite(IN5, LOW);
+  digitalWrite(IN6, LOW);
+  digitalWrite(IN7, LOW);
+  digitalWrite(IN8, LOW);
+}

@@ -1,0 +1,22 @@
+Branchement FINAL 
+ Capteurs ultrasons
+Position	TRIG	ECHO
+Avant GAUCHE	2	3
+Avant DROIT	4	5
+RouesFonction	Pin
+IN1	22
+IN2	23
+IN3	24
+IN4	25
+ENA	6
+ENB	9
+LamesFonction	Pin
+IN1	26
+IN2	27
+IN3	28
+IN4	29
+ENA	10
+ENB	11
+Bluetooth Module	Mega
+TX	19
+RX      18
